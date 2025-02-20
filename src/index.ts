@@ -13,7 +13,7 @@
 
 import { AutoRouter } from 'itty-router'
 import { handleHealth } from './handlers/health';
-
+import { handleFilesList } from './handlers/files';
 
 export const router = AutoRouter()
 
@@ -21,7 +21,7 @@ export const router = AutoRouter()
 router.get('/health', handleHealth);
 
 // files
-router.get('/api/files', () => new Response('Not implemented'));
+router.get('/api/files', handleFilesList);
 
 
 export default router
