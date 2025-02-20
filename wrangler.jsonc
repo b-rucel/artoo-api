@@ -9,7 +9,14 @@
 	"compatibility_date": "2025-02-14",
 	"observability": {
 		"enabled": true
-	}
+	},
+  "r2_buckets": [
+    {
+      "binding": "ARTOO_BUCKET",
+      "bucket_name": "artoo",
+      "preview_bucket_name": "artoo-dev"
+    }
+  ]
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

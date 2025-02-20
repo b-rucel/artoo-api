@@ -11,8 +11,17 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+import { AutoRouter } from 'itty-router'
+import { handleHealth } from './handlers/health';
+
+
+export const router = AutoRouter()
+
+// health check
+router.get('/health', handleHealth);
+
+// files
+router.get('/api/files', () => new Response('Not implemented'));
+
+
+export default router
