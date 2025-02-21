@@ -6,6 +6,7 @@ import worker from '../src/index';
 import { handleFilesList } from '../src/handlers/files';
 import { corsHeaders } from '../src/middleware/cors';
 import { handleFileDetails } from '../src/handlers/files';
+import { handleFileDownload } from '../src/handlers/files';
 
 describe('handleFilesList', () => {
   let mockEnv: any;
@@ -90,6 +91,11 @@ describe('handleFileDetails', () => {
     mockEnv.ARTOO_BUCKET.get.mockResolvedValue(mockObject);
 
     const request = new Request('http://localhost/files/test.txt');
+    Object.defineProperty(request, 'params', {
+      value: { path: 'test.txt' },
+      writable: true
+    });
+
     const response = await handleFileDetails(request, mockEnv, {} as ExecutionContext);
     const data = await response.json();
 
@@ -103,6 +109,11 @@ describe('handleFileDetails', () => {
     mockEnv.ARTOO_BUCKET.get.mockResolvedValue(null);
 
     const request = new Request('http://localhost/files/nonexistent.txt');
+    Object.defineProperty(request, 'params', {
+      value: { path: 'nonexistent.txt' },
+      writable: true
+    });
+
     const response = await handleFileDetails(request, mockEnv, {} as ExecutionContext);
 
     expect(response.status).toBe(404);
@@ -110,3 +121,95 @@ describe('handleFileDetails', () => {
     expect(data).toEqual({ error: 'File not found' });
   });
 });
+
+
+describe('handleFileDownload', () => {
+  let mockEnv: any;
+
+  beforeEach(() => {
+    mockEnv = {
+      ARTOO_BUCKET: {
+        get: vi.fn()
+      }
+    };
+  });
+
+  it('should download a file successfully', async () => {
+    const mockObject = {
+      body: new Blob(['test content']),
+      size: 12,
+      etag: 'abc123',
+      uploaded: new Date('2024-01-01'),
+      httpMetadata: {
+        contentType: 'text/plain'
+      }
+    };
+
+    mockEnv.ARTOO_BUCKET.get.mockResolvedValue(mockObject);
+
+    const request = new Request('http://localhost/files/test.txt');
+    Object.defineProperty(request, 'params', {
+      value: { path: 'test.txt' },
+      writable: true
+    });
+
+    const response = await handleFileDownload(request, mockEnv, {} as ExecutionContext);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('Content-Type')).toBe('text/plain');
+    expect(response.headers.get('Content-Length')).toBe('12');
+    expect(response.headers.get('ETag')).toBe('abc123');
+    expect(response.headers.get('Last-Modified')).toBe(mockObject.uploaded.toISOString());
+    expect(response.headers.get('Content-Disposition')).toBe('attachment; filename="test.txt"');
+    expect(mockEnv.ARTOO_BUCKET.get).toHaveBeenCalledWith('test.txt');
+  });
+
+  it('should handle non-existent files', async () => {
+    mockEnv.ARTOO_BUCKET.get.mockResolvedValue(null);
+
+    const request = new Request('http://localhost/files/nonexistent.txt');
+    Object.defineProperty(request, 'params', {
+      value: { path: 'nonexistent.txt' },
+      writable: true
+    });
+
+    const response = await handleFileDownload(request, mockEnv, {} as ExecutionContext);
+
+    expect(response.status).toBe(404);
+    const data = await response.json();
+    expect(data).toEqual({ error: 'File not found' });
+  });
+
+  it('should return 405 for non-GET requests', async () => {
+    const request = new Request('http://localhost/files/test.txt', { method: 'POST' });
+    const response = await handleFileDownload(request, mockEnv, {} as ExecutionContext);
+
+    expect(response.status).toBe(405);
+    const data = await response.json();
+    expect(data).toEqual({ error: 'Method Not Allowed' });
+  });
+
+  it('should use default content type if not specified', async () => {
+    const mockObject = {
+      body: new Blob(['test content']),
+      size: 12,
+      etag: 'abc123',
+      uploaded: new Date('2024-01-01'),
+      httpMetadata: {}  // No content type specified
+    };
+
+    mockEnv.ARTOO_BUCKET.get.mockResolvedValue(mockObject);
+
+    const request = new Request('http://localhost/files/test.txt');
+    Object.defineProperty(request, 'params', {
+      value: { path: 'test.txt' },
+      writable: true
+    });
+
+    const response = await handleFileDownload(request, mockEnv, {} as ExecutionContext);
+
+    expect(response.headers.get('Content-Type')).toBe('application/octet-stream');
+  });
+});
+
+

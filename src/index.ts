@@ -24,9 +24,10 @@ router.get('/health', handleHealth);
 router.get('/api/files', files.handleFilesList);
 router.get('/api/files/:path', files.handleFileDetails);
 router.get('/api/files/:path/download', files.handleFileDownload);
-router.post('/api/files/:path', files.handleFileUpload);
-router.delete('/api/files/:path', files.handleFileDelete);
-router.put('/api/files/:path', files.handleFileUpdate);
+
+// router.post('/api/files/:path', files.handleFileUpload);
+// router.delete('/api/files/:path', files.handleFileDelete);
+// router.put('/api/files/:path', files.handleFileUpdate);
 
 
 // 404 handler - this must be the last route

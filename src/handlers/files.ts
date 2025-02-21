@@ -58,9 +58,8 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
   }
 
   try {
-    const url = new URL(request.url);
-    // Extract the file path by removing '/files/' instead of '/api/files/'
-    const path = url.pathname.replace('/files/', '');
+    // @ts-ignore
+    const { path } = request.params;
     const object = await env.ARTOO_BUCKET.get(path);
 
     if (!object) {
@@ -80,6 +79,7 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
       }
     });
   } catch (error) {
+    console.log(error);
     return handleError(error as Error);
   }
 }
@@ -91,6 +91,45 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFileDownload = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    // @ts-ignore
+    const { path } = request.params;
+    const object = await env.ARTOO_BUCKET.get(path);
+
+    if (!object) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
+    return new Response(object.body, {
+      headers: {
+        'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
+        'Content-Length': object.size.toString(),
+        'ETag': object.etag,
+        'Last-Modified': object.uploaded.toISOString(),
+        'Content-Disposition': `attachment; filename="${encodeURIComponent(path.split('/').pop() || '')}"`,
+        ...corsHeaders,
+      },
+    });
+
+  } catch (error) {
+    return handleError(error as Error);
+  }
 }
 
 /**
