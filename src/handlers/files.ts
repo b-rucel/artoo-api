@@ -39,3 +39,83 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
     return handleError(error as Error);
   }
 }
+
+/**
+ * Handles the file details request.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers.
+ */
+export const handleFileDetails = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    // Extract the file path by removing '/files/' instead of '/api/files/'
+    const path = url.pathname.replace('/files/', '');
+    const object = await env.ARTOO_BUCKET.get(path);
+
+    if (!object) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
+    return new Response(JSON.stringify({ object }), {
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
+  } catch (error) {
+    return handleError(error as Error);
+  }
+}
+
+/**
+ * Handles the file download request.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers.
+ */
+export const handleFileDownload = async (request: Request, env: Env, context: ExecutionContext) => {
+}
+
+/**
+ * Handles the file upload request.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers.
+ */
+export const handleFileUpload = async (request: Request, env: Env, context: ExecutionContext) => {
+}
+
+/**
+ * Handles the file delete request.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers.
+ */
+export const handleFileDelete = async (request: Request, env: Env, context: ExecutionContext) => {
+}
+
+/**
+ * Handles the file update request.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers.
+ */
+export const handleFileUpdate = async (request: Request, env: Env, context: ExecutionContext) => {
+}
