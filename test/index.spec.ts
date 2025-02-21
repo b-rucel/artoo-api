@@ -21,7 +21,7 @@ describe('API Tests', () => {
   });
 
   describe('File Operations', () => {
-    it('should return 501 for unimplemented file list', async () => {
+    it('should return list of files', async () => {
       const request = new IncomingRequest('http://localhost:8787/api/files');
       const ctx = createExecutionContext();
 
@@ -29,8 +29,19 @@ describe('API Tests', () => {
       await waitOnExecutionContext(ctx);
       expect(response.status).toBe(200);
 
-      const text = await response.text();
-      expect(text).toBe('Not implemented');
+      const data = await response.json();
+      expect(data).toHaveProperty('files');
+      expect(Array.isArray(data.files)).toBe(true);
+
+      // Verify the structure of file objects
+      if (data.files.length > 0) {
+        expect(data.files[0]).toMatchObject({
+          name: expect.any(String),
+          size: expect.any(Number),
+          uploaded: expect.any(String),
+          etag: expect.any(String),
+        });
+      }
     });
   });
 });

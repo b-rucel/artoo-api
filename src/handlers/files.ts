@@ -9,6 +9,16 @@ import { handleError, ApiError } from '../utils/errors';
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFilesList = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
   try {
     const objects = await env.ARTOO_BUCKET.list();
 
