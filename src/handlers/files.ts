@@ -1,4 +1,3 @@
-
 import { corsHeaders } from '../middleware/cors';
 import { handleError, ApiError } from '../utils/errors';
 
@@ -20,7 +19,9 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
   }
 
   try {
-    const objects = await env.ARTOO_BUCKET.list();
+    // @ts-ignore
+    const path = request.query && request.query.path || "";
+    const objects = await env.ARTOO_BUCKET.list({ prefix: path });
 
     const files = objects.objects.map(obj => ({
       name: obj.key,
