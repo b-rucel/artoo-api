@@ -12,8 +12,8 @@
  */
 
 import { AutoRouter } from 'itty-router'
-import { handleHealth } from './handlers/health';
-
+import { handleHealth, handle404 } from './handlers/health';
+import * as files from './handlers/files';
 
 export const router = AutoRouter()
 
@@ -21,7 +21,16 @@ export const router = AutoRouter()
 router.get('/health', handleHealth);
 
 // files
-router.get('/api/files', () => new Response('Not implemented'));
+router.get('/api/files', files.handleFilesList);
+router.get('/api/files/:path', files.handleFileDetails);
+router.get('/api/files/:path/download', files.handleFileDownload);
 
+// router.post('/api/files/:path', files.handleFileUpload);
+// router.delete('/api/files/:path', files.handleFileDelete);
+// router.put('/api/files/:path', files.handleFileUpdate);
+
+
+// 404 handler - this must be the last route
+router.all('*', handle404);
 
 export default router
