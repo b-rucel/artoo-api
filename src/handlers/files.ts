@@ -4,7 +4,10 @@ import { handleError, ApiError } from '../utils/errors';
 
 /**
  * Handles the file list request.
+ * @param request Request object
  * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @query path - filter for the files
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFilesList = async (request: Request, env: Env, context: ExecutionContext) => {
@@ -59,8 +62,11 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
   }
 
   try {
-    // @ts-ignore
-    const { path } = request.params;
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
+    // maybe do a valid path check?
     const object = await env.ARTOO_BUCKET.get(path);
 
     if (!object) {

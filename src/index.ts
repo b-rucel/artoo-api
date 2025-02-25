@@ -22,8 +22,10 @@ router.get('/health', handleHealth);
 
 // files
 router.get('/api/files', files.handleFilesList);
-router.get('/api/files/:path', files.handleFileDetails);
-router.get('/api/files/:path/download', files.handleFileDownload);
+router.get('/api/details/*', files.handleFileDetails);
+// router.get('/api/files/:path/download', files.handleFileDownload);
+
+// router.get('/api/files/*', files.handleFileServe);
 
 // router.post('/api/files/:path', files.handleFileUpload);
 // router.delete('/api/files/:path', files.handleFileDelete);
