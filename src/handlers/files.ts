@@ -45,6 +45,55 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
 }
 
 /**
+ * Handles serving a file directly in the browser.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with the file content and appropriate headers.
+ */
+export const handleFileServe = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
+    const object = await env.ARTOO_BUCKET.get(path);
+
+    if (!object) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
+    return new Response(object.body, {
+      headers: {
+        'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
+        'Content-Length': object.size.toString(),
+        'ETag': object.etag,
+        'Last-Modified': object.uploaded.toISOString(),
+        ...corsHeaders,
+      },
+    });
+
+  } catch (error) {
+    return handleError(error as Error);
+  }
+}
+
+/**
  * Handles the file details request.
  * @param env Environment containing R2 bucket binding
  * @param context Execution context
@@ -109,8 +158,10 @@ export const handleFileDownload = async (request: Request, env: Env, context: Ex
   }
 
   try {
-    // @ts-ignore
-    const { path } = request.params;
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
     const object = await env.ARTOO_BUCKET.get(path);
 
     if (!object) {
