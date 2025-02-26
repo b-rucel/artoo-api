@@ -1,11 +1,13 @@
-
 import { corsHeaders } from '../middleware/cors';
 import { handleError, ApiError } from '../utils/errors';
 
 
 /**
  * Handles the file list request.
+ * @param request Request object
  * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @query path - filter for the files
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFilesList = async (request: Request, env: Env, context: ExecutionContext) => {
@@ -20,7 +22,9 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
   }
 
   try {
-    const objects = await env.ARTOO_BUCKET.list();
+    // @ts-ignore
+    const path = request.query && request.query.path || "";
+    const objects = await env.ARTOO_BUCKET.list({ prefix: path });
 
     const files = objects.objects.map(obj => ({
       name: obj.key,
@@ -35,6 +39,55 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
         ...corsHeaders
       }
     });
+  } catch (error) {
+    return handleError(error as Error);
+  }
+}
+
+/**
+ * Handles serving a file directly in the browser.
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with the file content and appropriate headers.
+ */
+export const handleFileServe = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'GET') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
+    const object = await env.ARTOO_BUCKET.get(path);
+
+    if (!object) {
+      return new Response(JSON.stringify({ error: 'File not found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      });
+    }
+
+    return new Response(object.body, {
+      headers: {
+        'Content-Type': object.httpMetadata?.contentType || 'application/octet-stream',
+        'Content-Length': object.size.toString(),
+        'ETag': object.etag,
+        'Last-Modified': object.uploaded.toISOString(),
+        ...corsHeaders,
+      },
+    });
+
   } catch (error) {
     return handleError(error as Error);
   }
@@ -58,8 +111,11 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
   }
 
   try {
-    // @ts-ignore
-    const { path } = request.params;
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
+    // maybe do a valid path check?
     const object = await env.ARTOO_BUCKET.get(path);
 
     if (!object) {
@@ -102,8 +158,10 @@ export const handleFileDownload = async (request: Request, env: Env, context: Ex
   }
 
   try {
-    // @ts-ignore
-    const { path } = request.params;
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/'); // root/api/details/path -> path
+
     const object = await env.ARTOO_BUCKET.get(path);
 
     if (!object) {

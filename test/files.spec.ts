@@ -66,6 +66,54 @@ describe('handleFilesList', () => {
 
     expect(response.status).toBe(500);
   });
+
+  it('should handle path prefix filtering', async () => {
+    const mockObjects = {
+      objects: [
+        {
+          key: 'folder1/test1.txt',
+          size: 100,
+          uploaded: '2024-01-01',
+          etag: 'abc123'
+        },
+        {
+          key: 'folder1/test2.txt',
+          size: 200,
+          uploaded: '2024-01-01',
+          etag: 'def456'
+        }
+      ]
+    };
+
+    mockEnv.ARTOO_BUCKET.list.mockResolvedValue(mockObjects);
+
+    const request = new Request('http://localhost/api/files?path=folder1/');
+    Object.defineProperty(request, 'query', {
+      value: { path: 'folder1/' },
+      writable: true
+    });
+
+    const response = await handleFilesList(request, mockEnv, {} as ExecutionContext);
+    const data = await response.json();
+
+    expect(mockEnv.ARTOO_BUCKET.list).toHaveBeenCalledWith({ prefix: 'folder1/' });
+    expect(data).toEqual({
+      files: [
+        {
+          name: 'folder1/test1.txt',
+          size: 100,
+          uploaded: '2024-01-01',
+          etag: 'abc123'
+        },
+        {
+          name: 'folder1/test2.txt',
+          size: 200,
+          uploaded: '2024-01-01',
+          etag: 'def456'
+        }
+      ]
+    });
+  });
 });
 
 
