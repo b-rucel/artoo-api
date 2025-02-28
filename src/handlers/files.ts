@@ -1,5 +1,17 @@
-import { corsHeaders } from '../middleware/cors';
+import { corsHeaders, handleCors } from '../middleware/cors';
 import { handleError, ApiError } from '../utils/errors';
+
+
+/**
+ * Handles CORS preflight requests for the API endpoints
+ * @param {Request} request - The incoming HTTP request object
+ * @returns {Response} A response with appropriate CORS headers
+ */
+export const handleCorsRequest = (request: Request) => {
+  return handleCors(request) || new Response(null, {
+    headers: corsHeaders
+  });
+};
 
 
 /**
@@ -197,6 +209,60 @@ export const handleFileDownload = async (request: Request, env: Env, context: Ex
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFileUpload = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const path = pathSegments.slice(3).join('/');
+
+    // Check if we have a file in the request
+    const contentType = request.headers.get('content-type');
+    if (!contentType) {
+      throw new ApiError(400, 'Missing content-type header');
+    }
+
+    // Get the file data from the request
+    const fileData = await request.arrayBuffer();
+    if (fileData.byteLength === 0) {
+      throw new ApiError(400, 'Empty file content');
+    }
+
+    // Upload the file to R2
+    const uploadResult = await env.ARTOO_BUCKET.put(path, fileData, {
+      httpMetadata: {
+        contentType: contentType,
+      },
+    });
+
+    if (!uploadResult) {
+      throw new ApiError(500, 'Failed to upload file');
+    }
+
+    // Return success response with file details
+    return new Response(JSON.stringify({
+      message: 'File uploaded successfully',
+      key: path,
+      etag: uploadResult.etag,
+    }), {
+      status: 201,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+
+  } catch (error) {
+    return handleError(error as Error);
+  }
 }
 
 /**
