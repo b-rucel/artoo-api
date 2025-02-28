@@ -27,7 +27,8 @@ router.get('/api/details/*', files.handleFileDetails);
 router.get('/api/download/*', files.handleFileDownload);
 
 
-// router.post('/api/files/:path', files.handleFileUpload);
+router.options('/api/files/*', files.handleCorsRequest);
+router.post('/api/files/*', files.handleFileUpload);
 // router.delete('/api/files/:path', files.handleFileDelete);
 // router.put('/api/files/:path', files.handleFileUpdate);
 
