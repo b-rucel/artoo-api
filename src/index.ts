@@ -32,6 +32,7 @@ router.options('/api/files/*', files.handleCorsRequest);
 router.post('/api/files/*', withAuth(files.handleFileUpload));
 
 // Add auth routes
+router.options('/api/auth/*', files.handleCorsRequest);
 router.post('/api/auth/login', auth.handleLogin);
 router.post('/api/auth/verify', auth.handleVerify);
 
