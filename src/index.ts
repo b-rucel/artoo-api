@@ -14,6 +14,8 @@
 import { AutoRouter } from 'itty-router'
 import { handleHealth, handle404 } from './handlers/health';
 import * as files from './handlers/files';
+import * as auth from './handlers/auth';
+import { withAuth } from './middleware/auth';
 
 export const router = AutoRouter()
 
@@ -26,9 +28,14 @@ router.get('/api/files/*', files.handleFileServe);
 router.get('/api/details/*', files.handleFileDetails);
 router.get('/api/download/*', files.handleFileDownload);
 
-
 router.options('/api/files/*', files.handleCorsRequest);
-router.post('/api/files/*', files.handleFileUpload);
+router.post('/api/files/*', withAuth(files.handleFileUpload));
+
+// Add auth routes
+router.post('/api/auth/login', auth.handleLogin);
+router.post('/api/auth/verify', auth.handleVerify);
+
+
 // router.delete('/api/files/:path', files.handleFileDelete);
 // router.put('/api/files/:path', files.handleFileUpdate);
 
