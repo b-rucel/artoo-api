@@ -16,6 +16,13 @@
       "bucket_name": "artoo",
       "preview_bucket_name": "artoo-dev"
     }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "ARTOO",
+      "id": "e982eb6ff8e1494985077c739712dfa5",
+      "preview_id": "303fd6d437a741d09d0f0b280f7ed8fc"
+    }
   ]
   /**
    * Smart Placement
