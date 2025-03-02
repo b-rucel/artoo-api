@@ -1,6 +1,7 @@
 {
   "name": "artoo-api",
-  "version": "0.0.0",
+  "description": "Cloudflare Workers API for Artoo file management system",
+  "version": "1.0.0-beta",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
@@ -8,7 +9,10 @@
     "start": "wrangler dev",
     "remote": "wrangler dev --remote",
     "test": "vitest",
-    "cf-typegen": "wrangler types"
+    "test:coverage": "vitest run --coverage",
+    "cf-typegen": "wrangler types",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.6.4",
@@ -19,5 +23,8 @@
   },
   "dependencies": {
     "itty-router": "^5.0.18"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

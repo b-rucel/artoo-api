@@ -2,6 +2,8 @@ import jwt from '@tsndr/cloudflare-worker-jwt';
 import { corsHeaders } from '../middleware/cors';
 import { ApiError } from '../utils/errors';
 import { JWTPayload } from '../middleware/auth';
+import { Env, LoginData } from '../types/env';
+
 
 /**
  * Handles the login request.
@@ -27,14 +29,13 @@ export const handleLogin = async (request: Request, env: Env) => {
   }
 
   try {
-    // @ts-ignore
-    const { username, password } = await request.json();
+    const { username, password } = await request.json() as LoginData;
 
     if (!username || !password) {
       throw new ApiError(400, 'Username and password are required');
     }
 
-    // @ts-ignore Get the stored password from KV
+    // Get the stored password from KV
     const storedPassword = await env.ARTOO.get(username);
 
     if (!storedPassword) {
@@ -48,12 +49,11 @@ export const handleLogin = async (request: Request, env: Env) => {
 
     // Create JWT token
     const payload: JWTPayload = {
-      sub: username, // use username as the subject
+      sub: username,
       username: username,
       exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour expiration
     };
 
-    // @ts-ignore
     const token = await jwt.sign(payload, env.JWT_SECRET);
 
     return new Response(JSON.stringify({ token }), {
@@ -115,7 +115,7 @@ export const handleVerify = async (request: Request, env: Env) => {
       });
     }
 
-    // @ts-ignore Verify token
+    // Verify token
     const isValid = await jwt.verify(token, env.JWT_SECRET);
     if (!isValid) {
       return new Response(JSON.stringify({ error: 'Invalid token' }), {

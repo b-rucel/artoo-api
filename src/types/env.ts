@@ -5,3 +5,8 @@ export interface Env {
   ARTOO: KVNamespace;
   JWT_SECRET: string;
 }
+
+export interface LoginData {
+  username: string;
+  password: string;
+}
