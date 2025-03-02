@@ -34,8 +34,8 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
   }
 
   try {
-    // @ts-ignore
-    const path = request.query && request.query.path || "";
+    const url = new URL(request.url);
+    const path = url.searchParams.get('path') || "";
     const objects = await env.ARTOO_BUCKET.list({ prefix: path });
 
     const files = objects.objects.map(obj => ({

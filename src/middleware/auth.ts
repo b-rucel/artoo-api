@@ -10,11 +10,15 @@ export interface JWTPayload {
 
 /**
  * Verifies the JWT token from the Authorization header
+ *
+ * @param {Request} request - The incoming request
+ * @param {Env} env - The environment variables
+ * @returns {Promise<JWTPayload>} The decoded JWT payload
  * @throws {ApiError} if token is invalid or missing
  */
 export async function verifyAuth(request: Request, env: Env): Promise<JWTPayload> {
   const authHeader = request.headers.get('Authorization');
-  
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new ApiError(401, 'Missing or invalid authorization header');
   }
@@ -22,7 +26,7 @@ export async function verifyAuth(request: Request, env: Env): Promise<JWTPayload
   const token = authHeader.split(' ')[1];
 
   try {
-    // @ts-ignore verify the token
+    // verify the token
     const isValid = await jwt.verify(token, env.JWT_SECRET);
     if (!isValid) {
       throw new ApiError(401, 'Invalid token');
