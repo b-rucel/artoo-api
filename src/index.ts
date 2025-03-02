@@ -1,14 +1,17 @@
 /**
- * Welcome to Cloudflare Workers! This is your first worker.
+ * Artoo API 
+ * A cloud-based file management solution built on Cloudflare's edge infrastructure.
+ *
+ * Main router configuration and endpoint definitions.
+ *
+ * Core features:
+ * - File management (upload, download, list, details)
+ * - Authentication (login, token verification)
+ * - Health monitoring
  *
  * - Run `npm run dev` in your terminal to start a development server
  * - Open a browser tab at http://localhost:8787/ to see your worker in action
  * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.jsonc`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
  */
 
 import { AutoRouter } from 'itty-router'
@@ -31,15 +34,13 @@ router.get('/api/download/*', files.handleFileDownload);
 router.options('/api/files/*', files.handleCorsRequest);
 router.post('/api/files/*', withAuth(files.handleFileUpload));
 
-// Add auth routes
+// auth
 router.options('/api/auth/*', files.handleCorsRequest);
 router.post('/api/auth/login', auth.handleLogin);
 router.post('/api/auth/verify', auth.handleVerify);
 
-
 // router.delete('/api/files/:path', files.handleFileDelete);
 // router.put('/api/files/:path', files.handleFileUpdate);
-
 
 // 404 handler - this must be the last route
 router.all('*', handle404);

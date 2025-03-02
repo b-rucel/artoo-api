@@ -147,7 +147,6 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
       }
     });
   } catch (error) {
-    console.log(error);
     return handleError(error as Error);
   }
 }
