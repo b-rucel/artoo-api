@@ -2,21 +2,40 @@ import jwt from '@tsndr/cloudflare-worker-jwt';
 import { corsHeaders } from '../middleware/cors';
 import { ApiError } from '../utils/errors';
 import { JWTPayload } from '../middleware/auth';
+import { Env, LoginData } from '../types/env';
 
+
+/**
+ * Handles the login request.
+ * Expects username and password in request body as JSON: { "username": "user", "password": "pass" }
+ *
+ * @param {Request} request - The incoming HTTP request
+ * @param {Env} env - Environment variables and bindings
+ * @returns {Promise<Response>} JSON response with JWT token or error message with appropriate status code
+ *
+ * @example
+ * // Request body
+ * { "username": "user", "password": "pass" }
+ *
+ * // Success response
+ * { "token": "{ "token": "..." }
+ *
+ * // Error response
+ * { "error": "Invalid credentials" }
+ */
 export const handleLogin = async (request: Request, env: Env) => {
   if (request.method !== 'POST') {
     throw new ApiError(405, 'Method not allowed');
   }
 
   try {
-    // @ts-ignore
-    const { username, password } = await request.json();
+    const { username, password } = await request.json() as LoginData;
 
     if (!username || !password) {
       throw new ApiError(400, 'Username and password are required');
     }
 
-    // @ts-ignore Get the stored password from KV
+    // Get the stored password from KV
     const storedPassword = await env.ARTOO.get(username);
 
     if (!storedPassword) {
@@ -30,12 +49,11 @@ export const handleLogin = async (request: Request, env: Env) => {
 
     // Create JWT token
     const payload: JWTPayload = {
-      sub: username, // use username as the subject
+      sub: username,
       username: username,
       exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour expiration
     };
 
-    // @ts-ignore
     const token = await jwt.sign(payload, env.JWT_SECRET);
 
     return new Response(JSON.stringify({ token }), {
@@ -53,9 +71,34 @@ export const handleLogin = async (request: Request, env: Env) => {
   }
 };
 
+
+/**
+ * Verifies a JWT token's validity and expiration
+ * Expects token in request body as JSON: { "token": "jwt-token-string" }
+ *
+ * @param {Request} request - The incoming HTTP request
+ * @param {Env} env - Environment variables and bindings
+ * @returns {Promise<Response>} JSON response with validation result and payload
+ *                             or error message with appropriate status code
+ * @example
+ * // Request body
+ * { "token": "eyJhbGciOiJIUzI1..." }
+ *
+ * // Success response
+ * { "valid": true, "payload": { "sub": "user", "username": "user", "exp": 1234567890 } }
+ *
+ * // Error response
+ * { "error": "Token is required" }
+ */
 export const handleVerify = async (request: Request, env: Env) => {
   if (request.method !== 'POST') {
-    throw new ApiError(405, 'Method not allowed');
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
   }
 
   try {
@@ -63,13 +106,25 @@ export const handleVerify = async (request: Request, env: Env) => {
     const { token } = body;
 
     if (!token) {
-      throw new ApiError(400, 'Token is required');
+      return new Response(JSON.stringify({ error: 'Token is required' }), {
+        status: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
     }
 
-    // @ts-ignore Verify token
+    // Verify token
     const isValid = await jwt.verify(token, env.JWT_SECRET);
     if (!isValid) {
-      throw new ApiError(401, 'Invalid token');
+      return new Response(JSON.stringify({ error: 'Invalid token' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
     }
 
     // Decode and check expiration
@@ -77,7 +132,13 @@ export const handleVerify = async (request: Request, env: Env) => {
     const payload = decoded.payload as JWTPayload;
 
     if (payload.exp < Date.now() / 1000) {
-      throw new ApiError(401, 'Token expired');
+      return new Response(JSON.stringify({ error: 'Token expired' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
+      });
     }
 
     return new Response(JSON.stringify({ valid: true, payload }), {
@@ -88,9 +149,13 @@ export const handleVerify = async (request: Request, env: Env) => {
     });
 
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError(500, 'Internal server error');
+    console.error('Error verifying token:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders
+      }
+    });
   }
 };
