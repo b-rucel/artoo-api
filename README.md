@@ -1,6 +1,8 @@
 # Artoo API
 
-A cloud-based file management solution built on Cloudflare's edge infrastructure.
+![artoo](/artoo.webp)
+
+A cloud-based file management solution built on Cloudflare's edge infrastructure.<br />
 Artoo API is the backend component of the Artoo file management system. It provides secure file operations and user authentication through Cloudflare Workers and R2 storage.
 
 ## Features
