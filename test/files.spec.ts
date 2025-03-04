@@ -138,7 +138,7 @@ describe('handleFileDetails', () => {
 
     mockEnv.ARTOO_BUCKET.get.mockResolvedValue(mockObject);
 
-    const request = new Request('http://localhost/files/test.txt');
+    const request = new Request('http://localhost/api/details/test.txt');
     Object.defineProperty(request, 'params', {
       value: { path: 'test.txt' },
       writable: true
@@ -195,7 +195,7 @@ describe('handleFileDownload', () => {
 
     mockEnv.ARTOO_BUCKET.get.mockResolvedValue(mockObject);
 
-    const request = new Request('http://localhost/files/test.txt');
+    const request = new Request('http://localhost/api/download/test.txt');
     Object.defineProperty(request, 'params', {
       value: { path: 'test.txt' },
       writable: true
