@@ -1,6 +1,6 @@
 import jwt from '@tsndr/cloudflare-worker-jwt';
 import { corsHeaders } from '../middleware/cors';
-import { ApiError } from '../utils/errors';
+import { ApiError, handleError } from '../utils/errors';
 import { JWTPayload } from '../middleware/auth';
 import { Env, LoginData } from '../types/env';
 
@@ -25,26 +25,26 @@ import { Env, LoginData } from '../types/env';
  */
 export const handleLogin = async (request: Request, env: Env) => {
   if (request.method !== 'POST') {
-    throw new ApiError(405, 'Method not allowed');
+    return handleError(new ApiError(405, 'Method not allowed'));
   }
 
   try {
     const { username, password } = await request.json() as LoginData;
 
     if (!username || !password) {
-      throw new ApiError(400, 'Username and password are required');
+      return handleError(new ApiError(400, 'Username and password are required'));
     }
 
     // Get the stored password from KV
     const storedPassword = await env.ARTOO.get(username);
 
     if (!storedPassword) {
-      throw new ApiError(401, 'Invalid credentials');
+      return handleError(new ApiError(401, 'Invalid credentials'));
     }
 
     // Compare the passwords
     if (password !== storedPassword) {
-      throw new ApiError(401, 'Invalid credentials');
+      return handleError(new ApiError(401, 'Invalid credentials'));
     }
 
     // Create JWT token
@@ -67,7 +67,8 @@ export const handleLogin = async (request: Request, env: Env) => {
     if (error instanceof ApiError) {
       throw error;
     }
-    throw new ApiError(500, 'Internal server error');
+
+    return handleError(new ApiError(500, 'Internal server error'));
   }
 };
 

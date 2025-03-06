@@ -56,6 +56,7 @@ export const handleFilesList = async (request: Request, env: Env, context: Execu
   }
 }
 
+
 /**
  * Handles serving a file directly in the browser.
  * @param env Environment containing R2 bucket binding
@@ -105,6 +106,7 @@ export const handleFileServe = async (request: Request, env: Env, context: Execu
   }
 }
 
+
 /**
  * Handles the file details request.
  * @param env Environment containing R2 bucket binding
@@ -150,6 +152,7 @@ export const handleFileDetails = async (request: Request, env: Env, context: Exe
     return handleError(error as Error);
   }
 }
+
 
 /**
  * Handles the file download request.
@@ -200,6 +203,7 @@ export const handleFileDownload = async (request: Request, env: Env, context: Ex
     return handleError(error as Error);
   }
 }
+
 
 /**
  * Handles the file upload request.
@@ -264,6 +268,7 @@ export const handleFileUpload = async (request: Request, env: Env, context: Exec
   }
 }
 
+
 /**
  * Handles the file delete request.
  * @param env Environment containing R2 bucket binding
@@ -316,6 +321,7 @@ export const handleFileDelete = async (request: Request, env: Env, context: Exec
     return handleError(error as Error);
   }
 }
+
 
 /**
  * Handles the file update request.

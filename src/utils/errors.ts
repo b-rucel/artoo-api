@@ -18,8 +18,6 @@ export class ApiError extends Error {
  * 
  */
 export function handleError(error: Error): Response {
-  console.error('Error:', error);
-
   if (error instanceof ApiError) {
     return new Response(JSON.stringify({
       error: error.message
