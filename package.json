@@ -1,7 +1,7 @@
 {
   "name": "artoo-api",
   "description": "Cloudflare Workers API for Artoo file management system",
-  "version": "1.0.0-beta",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "deploy": "wrangler deploy",
