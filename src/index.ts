@@ -33,6 +33,7 @@ router.get('/api/download/*', files.handleFileDownload);
 
 router.options('/api/files/*', files.handleCorsRequest);
 router.post('/api/files/*', withAuth(files.handleFileUpload));
+router.delete('/api/files/*', withAuth(files.handleFileDelete));
 
 // auth
 router.options('/api/auth/*', files.handleCorsRequest);
