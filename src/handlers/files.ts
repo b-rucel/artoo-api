@@ -276,6 +276,13 @@ export const handleFileUpload = async (request: Request, env: Env, context: Exec
  * @returns A response with a JSON body and CORS headers.
  */
 export const handleFileDelete = async (request: Request, env: Env, context: ExecutionContext) => {
+  // Handle OPTIONS request for CORS
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders
+    });
+  }
+
   if (request.method !== 'DELETE') {
     return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
       status: 405,
@@ -289,7 +296,7 @@ export const handleFileDelete = async (request: Request, env: Env, context: Exec
   try {
     const url = new URL(request.url);
     const pathSegments = url.pathname.split('/');
-    const path = pathSegments.slice(3).join('/'); // root/api/files/path -> path
+    const path = pathSegments.slice(3).join('/');
 
     // Check if file exists before deleting
     const object = await env.ARTOO_BUCKET.get(path);
