@@ -331,6 +331,140 @@ export const handleFileDelete = async (request: Request, env: Env, context: Exec
 
 
 /**
+ * Handles the file move request.
+ * Moves a file from source path to destination path.
+ * 
+ * @param request Request containing source and destination paths
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers
+ */
+export const handleFileMove = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+
+  try {
+    const { destination } = await request.json() as { destination: string };
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const sourcePath = pathSegments.slice(3).join('/');
+
+    if (!destination) {
+      throw new ApiError(400, 'Destination path is required');
+    }
+
+    // Get the source file
+    const sourceObject = await env.ARTOO_BUCKET.get(sourcePath);
+    if (!sourceObject) {
+      throw new ApiError(404, 'Source file not found');
+    }
+
+    // Copy the file to the new location
+    const uploadResult = await env.ARTOO_BUCKET.put(destination, sourceObject.body, {
+      httpMetadata: sourceObject.httpMetadata
+    });
+
+    if (!uploadResult) {
+      throw new ApiError(500, 'Failed to move file');
+    }
+
+    // Delete the source file
+    await env.ARTOO_BUCKET.delete(sourcePath);
+
+    return new Response(JSON.stringify({
+      message: 'File moved successfully',
+      from: sourcePath,
+      to: destination,
+      etag: uploadResult.etag,
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+
+  } catch (error) {
+    return handleError(error as Error);
+  }
+}
+
+
+/**
+ * Handles the file copy request.
+ * Copies a file from source path to destination path.
+ * 
+ * @param request Request containing source and destination paths
+ * @param env Environment containing R2 bucket binding
+ * @param context Execution context
+ * @returns A response with a JSON body and CORS headers
+ */
+export const handleFileCopy = async (request: Request, env: Env, context: ExecutionContext) => {
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
+      status: 405,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+  }
+
+  try {
+    const { destination } = await request.json() as { destination: string };
+    const url = new URL(request.url);
+    const pathSegments = url.pathname.split('/');
+    const sourcePath = pathSegments.slice(3).join('/');
+
+    if (!destination) {
+      throw new ApiError(400, 'Destination path is required');
+    }
+
+    // Get the source file
+    const sourceObject = await env.ARTOO_BUCKET.get(sourcePath);
+    if (!sourceObject) {
+      throw new ApiError(404, 'Source file not found');
+    }
+
+    // Copy the file to the new location
+    const uploadResult = await env.ARTOO_BUCKET.put(destination, sourceObject.body, {
+      httpMetadata: sourceObject.httpMetadata
+    });
+
+    if (!uploadResult) {
+      throw new ApiError(500, 'Failed to copy file');
+    }
+
+    return new Response(JSON.stringify({
+      message: 'File copied successfully',
+      from: sourcePath,
+      to: destination,
+      etag: uploadResult.etag,
+    }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        ...corsHeaders,
+      },
+    });
+
+  } catch (error) {
+    return handleError(error as Error);
+  }
+}
+
+
+
+
+/**
  * Handles the file update request.
  * @param env Environment containing R2 bucket binding
  * @param context Execution context
