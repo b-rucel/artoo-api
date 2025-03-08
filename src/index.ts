@@ -35,7 +35,9 @@ router.options('/api/files/*', files.handleCorsRequest);
 router.post('/api/files/*', withAuth(files.handleFileUpload));
 router.delete('/api/files/*', withAuth(files.handleFileDelete));
 
+router.options('/api/move/*', files.handleCorsRequest);
 router.post('/api/move/*', withAuth(files.handleFileMove));
+router.options('/api/copy/*', files.handleCorsRequest);
 router.post('/api/copy/*', withAuth(files.handleFileCopy));
 
 
